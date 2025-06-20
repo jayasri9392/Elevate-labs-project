@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Portfolio Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f3f4f6;
+      color: #111;
+      padding: 20px;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    input, textarea {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px 5px 0 0;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      background-color: #4f46e5;
+      cursor: pointer;
+    }
+    button.download {
+      background-color: #059669;
+    }
+    h1, h2, h3 {
+      text-align: center;
+    }
+    #portfolio {
+      background: #fff;
+      padding: 20px;
+      margin-top: 20px;
+      border-radius: 10px;
+    }
+    ul {
+      text-align: left;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Guided Portfolio Generator</h1>
+
+    <input type="text" id="name" placeholder="Your Full Name" />
+    <input type="text" id="role" placeholder="Your Role or Title" />
+    <input type="text" id="skills" placeholder="Your Skills (comma-separated)" />
+    <textarea id="projects" rows="3" placeholder="Your Projects (one per line)"></textarea>
+    <textarea id="contact" rows="2" placeholder="Contact Info (email, GitHub, LinkedIn)"></textarea>
+
+    <label>Upload Profile Image:</label>
+    <input type="file" id="imageUpload" accept="image/*" />
+
+    <div>
+      <button id="generateBtn">Generate Portfolio</button>
+      <button id="downloadBtn" class="download">Download as PDF</button>
+    </div>
+
+    <div class="hidden" id="portfolio-container">
+      <div id="portfolio"></div>
+    </div>
+  </div>
+  <script>
+    function downloadPDF() {
+      const element = document.getElementById("portfolio");
+      const opt = {
+        margin: 0.5,
+        filename: 'portfolio.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+      html2pdf().set(opt).from(element).save();
+    }
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <script>
+    const generateBtn = document.getElementById("generateBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const portfolioContainer = document.getElementById("portfolio-container");
+    const portfolio = document.getElementById("portfolio");
+
+    let portfolioReady = false;
+
+    generateBtn.onclick = () => {
+      const name = document.getElementById("name").value.trim();
+      const role = document.getElementById("role").value.trim();
+      const skills = document.getElementById("skills").value.trim().split(",").map(s => s.trim()).filter(Boolean);
+      const projects = document.getElementById("projects").value.trim().split("\n").map(p => p.trim()).filter(Boolean);
+      const contact = document.getElementById("contact").value.trim();
+      const file = document.getElementById("imageUpload").files[0];
+
+      if (!name || !role || !skills.length || !projects.length || !contact) {
+        alert("Please fill in all fields!");
+        return;
+      }
+
+      portfolio.innerHTML = "<p>Generating portfolio...</p>";
+      portfolioContainer.classList.remove("hidden");
+
+      const nameEl = `<h2>${name}</h2>`;
+      const roleEl = `<h3>${role}</h3>`;
+      const skillsEl = `
+        <div>
+          <h4>💻 Skills:</h4>
+          <ul>
+            ${skills.map(skill => `<li>${skill}</li>`).join("")}
+          </ul>
+        </div>`;
+      const projectsEl = `
+        <div>
+          <h4>📂 Projects:</h4>
+          <ul>
+            ${projects.map(p => `<li>${p}</li>`).join("")}
+          </ul>
+        </div>`;
+      const contactEl = `
+        <div>
+          <h4>📞 Contact:</h4>
+          <p>${contact.replaceAll('\n', '<br>')}</p>
+        </div>`;
+
+      function renderPortfolio(imageHTML = "") {
+        portfolio.innerHTML = `
+          <div class="text-center">
+            ${imageHTML}
+            ${nameEl}
+            ${roleEl}
+          </div>
+          ${skillsEl}
+          ${projectsEl}
+          ${contactEl}
+        `;
+        portfolioReady = true;
+        downloadBtn.disabled =false;
+      }
+      generateBtn.onclick =() => {
+        downloadBtn.disabled = true;
+      }
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const imageHTML = `<img src="${e.target.result}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%; margin: 10px auto;" />`;
+          renderPortfolio(imageHTML);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        renderPortfolio();
+      }
+    };
+
+    downloadBtn.onclick = () => {
+      if (!portfolioReady) {
+        alert("Please generate the portfolio first.");
+        return;
+      }
+      downloadPDF();
+    };
+  </script>
+</body>
+</html>
